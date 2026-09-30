@@ -53,11 +53,6 @@ function draw(animate=false){
   $('#art').innerHTML=state.step===2?postcard(state):bouquet(state,animate,true);
   $('#composition-name').textContent=state.step===2?'Ваша открытка':`${state.customLayout?'Своя композиция':BASES[state.base].name} · ${state.items.length} из ${MAX_ITEMS}`;
   $('#undo').disabled=!previous||exporting;
-  syncSelectionControls();
-}
-function syncSelectionControls(){
- const canRotate=state.step!==2&&state.items.some(i=>i.uid===state.selectedUid)&&!exporting;
- $('#rotate-left').classList.toggle('hidden',!canRotate);$('#rotate-right').classList.toggle('hidden',!canRotate);
 }
 function controls(){
  document.querySelectorAll('[data-step]').forEach((b,i)=>{b.setAttribute('aria-current',i===state.step?'step':'false');b.disabled=exporting||(i>0&&!state.items.length)});
@@ -113,12 +108,12 @@ $('#undo').onclick=()=>{if(!previous)return;const current=snapshot();state=previ
 $('#restart').onclick=()=>{if(!confirm('Начать новый букет?'))return;state=initialState();previous=null;ensurePositions(state,true);render()};
 function point(e,svg){const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left)*500/r.width,y:(e.clientY-r.top)*590/r.height}}
 function itemTransform(item){return `translate(${item.x} ${item.y}) rotate(${item.rotation||0}) scale(${item.scale||.9})`}
-$('#art').addEventListener('pointerdown',e=>{if(state.step===2)return;const g=e.target.closest('[data-bouquet-item]');if(!g)return;e.preventDefault();const uid=+g.dataset.bouquetItem,item=state.items.find(i=>i.uid===uid),svg=g.ownerSVGElement,p=point(e,svg);remember();item.z=Math.max(0,...state.items.map(i=>i.z||0))+1;state.selectedUid=uid;document.querySelectorAll('.bouquet-object').forEach(el=>el.classList.toggle('is-selected',el===g));syncSelectionControls();drag={uid,dx:p.x-item.x,dy:p.y-item.y,svg,el:g,moved:false,pointerId:e.pointerId};e.currentTarget.setPointerCapture?.(e.pointerId)});
+$('#art').addEventListener('pointerdown',e=>{if(state.step===2)return;const rotate=e.target.closest('[data-rotate]');if(rotate){e.preventDefault();e.stopPropagation();rotateSelected(+rotate.dataset.rotate);return}const g=e.target.closest('[data-bouquet-item]');if(!g)return;e.preventDefault();const uid=+g.dataset.bouquetItem,item=state.items.find(i=>i.uid===uid),svg=g.ownerSVGElement,p=point(e,svg);remember();item.z=Math.max(0,...state.items.map(i=>i.z||0))+1;state.selectedUid=uid;draw();drag={uid,dx:p.x-item.x,dy:p.y-item.y,svg:$('#art svg'),el:document.querySelector(`[data-bouquet-item="${uid}"]`),moved:false,pointerId:e.pointerId};e.currentTarget.setPointerCapture?.(e.pointerId)});
 $('#art').addEventListener('pointermove',e=>{if(!drag)return;e.preventDefault();const item=state.items.find(i=>i.uid===drag.uid),p=point(e,drag.svg);item.x=Math.max(70,Math.min(430,p.x-drag.dx));item.y=Math.max(100,Math.min(430,p.y-drag.dy));state.customLayout=true;drag.moved=true;drag.el.setAttribute('transform',itemTransform(item))});
 function endDrag(e){if(!drag)return;try{$('#art').releasePointerCapture?.(drag.pointerId)}catch{}if(drag.moved){draw();notice('Своя композиция сохранена')}drag=null}
 $('#art').addEventListener('pointerup',endDrag);$('#art').addEventListener('pointercancel',endDrag);
 function rotateSelected(delta){const item=state.items.find(i=>i.uid===state.selectedUid);if(!item||exporting)return;remember();item.rotation=((item.rotation+delta+180)%360)-180;item.z=Math.max(0,...state.items.map(i=>i.z||0))+1;state.customLayout=true;draw();notice(delta<0?'Повернули влево':'Повернули вправо')}
-$('#rotate-left').onclick=()=>rotateSelected(-15);$('#rotate-right').onclick=()=>rotateSelected(15);
+$('#art').addEventListener('keydown',e=>{const rotate=e.target.closest('[data-rotate]');if(!rotate||!['Enter',' '].includes(e.key))return;e.preventDefault();rotateSelected(+rotate.dataset.rotate)});
 function openPreview(){const d=$('#large-preview');$('#large-art').innerHTML=postcard(state);d.showModal()}
 $('#zoom').onclick=openPreview;$('#close-preview').onclick=()=>$('#large-preview').close();$('#large-preview').addEventListener('click',e=>{if(e.target===$('#large-preview'))e.currentTarget.close()});
 function textLines(text,size,width){const c=document.createElement('canvas').getContext('2d');c.font=`${size}px Graphik,Arial`;const out=[];for(const para of text.trim().split('\n')){let line='';for(const word of para.split(/\s+/)){const t=line?`${line} ${word}`:word;if(c.measureText(t).width<=width)line=t;else{if(line)out.push(line);line=word}}if(line)out.push(line)}return out}
