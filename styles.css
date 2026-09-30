@@ -117,3 +117,4 @@
 .studio,.stage,.workbench,.panel{min-height:0}.studio{overflow:hidden}
 .preview,#art,#art svg{touch-action:none;user-select:none;-webkit-user-select:none}.bouquet-object{will-change:transform}
 .stage.card-mode .stage-heading,.stage.card-mode .drag-hint{display:none}
+.stage{overflow:clip}
