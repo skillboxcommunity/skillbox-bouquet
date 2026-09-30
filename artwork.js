@@ -134,6 +134,7 @@ const BOUQUET_LAYOUTS=[
  [[145,175],[337,193],[235,94],[104,302],[390,311],[255,270],[189,316],[330,318],[78,235],[422,238],[262,348],[108,107],[387,113],[244,202],[349,265]],
  [[157,222],[310,119],[229,161],[99,334],[367,256],[280,304],[181,312],[349,320],[78,250],[412,190],[264,354],[112,125],[365,96],[251,246],[340,215]]
 ];
+const EXTRA_POSITIONS=[[70,170],[430,170],[62,292],[438,292],[120,78],[380,78],[202,58],[298,58],[250,190]];
 const oldItemArt=itemArt;
 function topperArtwork(id,variant=0){
   const lines=TOPPER_LABELS[id],fill=['#3D3BFF','#000000','#FFC38E','#F7C8FF'][variant%4],ink=variant%4<2?'#fff':'#000';
@@ -154,12 +155,12 @@ itemArt=function(id,colors,variant=0){
 };
 function ensurePositions(s,reset=false){
   const pos=BOUQUET_LAYOUTS[s.shape]||BOUQUET_LAYOUTS[0];
-  s.items.forEach((o,i)=>{if(reset||!Number.isFinite(o.x)){const p=pos[i%pos.length];o.x=p[0];o.y=p[1];o.rotation=((o.uid*17)%25)-12;o.scale=(s.items.length>11?.7:s.items.length>8?.79:.91)+((o.uid%5)*.025);o.z=i;}});
+  s.items.forEach((o,i)=>{if(reset||!Number.isFinite(o.x)){const p=i<pos.length?pos[i]:EXTRA_POSITIONS[(i-pos.length)%EXTRA_POSITIONS.length];o.x=p[0];o.y=p[1];o.rotation=((o.uid*17)%25)-12;o.scale=(s.items.length>20?.54:s.items.length>15?.61:s.items.length>11?.7:s.items.length>8?.79:.91)+((o.uid%5)*.018);o.z=i;}});
 }
 bouquet=function(s,animate=false,interactive=true){
   ensurePositions(s);const colors=PALETTES[s.palette].colors,green=colors[3]||'#748e57';let stems='',objects='',top='',leaves='';
   for(let i=0;i<6;i++){const x=82+i*66,y=226+(i%3)*27;leaves+=`<path d="M250 480Q${x} ${y+65} ${x} ${y}" stroke="${green}" stroke-width="3" fill="none"/><path d="M${x} ${y+30}q-34-2-31-34q34 0 31 34q35-3 28-35q-28 4-28 35" fill="${green}" opacity=".82"/>`;}
-  [...s.items].sort((a,b)=>(a.z||0)-(b.z||0)).forEach(o=>{const selected=interactive&&s.selectedUid===o.uid,content=`<g class="bouquet-object${selected?' is-selected':''}" data-bouquet-item="${o.uid}" transform="translate(${o.x} ${o.y}) rotate(${o.rotation||0}) scale(${o.scale||.9})"><rect class="selection-ring" x="-73" y="-108" width="146" height="200" rx="22" fill="none" stroke="#3D3BFF" stroke-width="3"/>${itemArt(o.id,colors,o.variant)}</g>`;if(TOPPER_IDS.has(o.id)){top+=content}else{stems+=`<path d="M250 480Q${o.x} ${o.y+100} ${o.x} ${o.y}" stroke="${green}" stroke-width="3" fill="none"/>`;objects+=content}});
+  [...s.items].sort((a,b)=>(a.z||0)-(b.z||0)).forEach(o=>{const selected=interactive&&s.selectedUid===o.uid,ring=interactive?`<rect class="selection-ring" x="-65" y="-98" width="130" height="182" rx="20" fill="none" stroke="#3D3BFF" stroke-width="2" opacity="${selected?1:0}"/>`:'',content=`<g class="bouquet-object${selected?' is-selected':''}" data-bouquet-item="${o.uid}" transform="translate(${o.x} ${o.y}) rotate(${o.rotation||0}) scale(${o.scale||.9})">${ring}${itemArt(o.id,colors,o.variant)}</g>`;if(TOPPER_IDS.has(o.id)){top+=content}else{stems+=`<path d="M250 480Q${o.x} ${o.y+100} ${o.x} ${o.y}" stroke="${green}" stroke-width="3" fill="none"/>`;objects+=content}});
   const wc=['#968BAB','#B99775','#F0EEE8','#202020'][s.wrap],rc=['#3D3BFF','#FFC38E','#F7C8FF'][s.ribbon];
   const wrap=`<g class="${animate?'wrap-reveal':''}"><path d="M74 320L237 374L427 310L310 538Q249 560 194 534Z" fill="${wc}"/><path d="M74 320L250 464L194 534Z" fill="#fff" opacity=".2"/><path d="M427 310L250 464L310 538Z" fill="#000" opacity=".15"/><path d="M190 473Q244 488 312 473" stroke="${rc}" stroke-width="11" fill="none"/><g transform="translate(250 477)"><path d="M0 0C-83-54-74 29 0 0C82-51 82 26 0 0M-2 1Q-10 37-31 65L-8 56L3 64Q22 19 2 0M3 0Q32 26 42 60L26 55L21 64Q13 28 0 0" fill="${rc}"/></g></g>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 590" aria-label="Ваш букет из ${s.items.length} предметов" role="img"><g>${s.items.length?leaves+stems+objects+wrap+top:'<path d="M100 320L250 390L400 320L300 530H200Z" fill="#e7e7e7"/><text x="250" y="270" text-anchor="middle" font-family="Graphik,Arial" font-size="18">Добавьте первый предмет</text>'}</g></svg>`;

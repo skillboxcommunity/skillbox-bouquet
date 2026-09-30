@@ -33,6 +33,7 @@ const PHRASES=[
 'Этот букет — маленькое спасибо за ваш большой вклад. С Днём учителя!'
 ];
 const CATEGORIES=['Цветы','Зелень','Вкусное','Для дела','Украшения','Увлечения','Топперы'];
+const MAX_ITEMS=24;
 let nextUid=0;
 const makeItem=id=>({id,uid:++nextUid,variant:Math.floor(Math.random()*4),x:null,y:null,rotation:0,scale:.9,z:nextUid});
 let state={step:0,base:0,category:'Цветы',items:BASES[0].items.map(makeItem),palette:0,wrap:0,ribbon:0,shape:0,seed:Date.now(),message:PHRASES[0],title:0,selectedUid:null,customLayout:false,phrasesOpen:false,lastPhrase:0};
@@ -46,28 +47,28 @@ function draw(animate=false){
   $('.stage').classList.toggle('card-mode',state.step===2);
   $('#drag-hint').classList.toggle('hidden',state.step===2||!state.items.length);
   $('#art').innerHTML=state.step===2?postcard(state):bouquet(state,animate,true);
-  $('#composition-name').textContent=state.step===2?'Ваша открытка':`${state.customLayout?'Своя композиция':BASES[state.base].name} · ${state.items.length} из 15`;
+  $('#composition-name').textContent=state.step===2?'Ваша открытка':`${state.customLayout?'Своя композиция':BASES[state.base].name} · ${state.items.length} из ${MAX_ITEMS}`;
   $('#undo').disabled=!previous||exporting;$('#shuffle').disabled=!state.items.length||exporting;
 }
 function controls(){
  document.querySelectorAll('[data-step]').forEach((b,i)=>{b.setAttribute('aria-current',i===state.step?'step':'false');b.disabled=exporting||(i>0&&!state.items.length)});
  $('#next').disabled=exporting||!state.items.length;$('#restart').disabled=exporting;
- $('#help').textContent=state.step===0?'До 15 предметов. Любой можно передвинуть.':state.step===1?'Палитра, упаковка и композиция':'Текст остаётся только на вашем устройстве';
+ $('#help').textContent=state.step===0?`До ${MAX_ITEMS} предметов. Любой можно передвинуть.`:state.step===1?'Палитра, упаковка и композиция':'Текст остаётся только на вашем устройстве';
  $('#next').innerHTML=exporting?'Сохраняем…':state.step===0?'Завернуть букет <span>→</span>':state.step===1?'Написать поздравление <span>→</span>':'Скачать открытку <span>↓</span>';
 }
 function card(v){
  const count=state.items.filter(i=>i.id===v.id).length;
- return `<article class="item-card">${thumb(v.id,state.palette)}<span class="item-name">${v.name}</span><div class="stepper"><button data-minus-id="${v.id}" aria-label="Убрать ${v.name}" ${count?'':'disabled'}>−</button><span>${count}</span><button data-add="${v.id}" aria-label="Добавить ${v.name}" ${state.items.length>=15?'disabled':''}>+</button></div></article>`;
+ return `<article class="item-card">${thumb(v.id,state.palette)}<span class="item-name">${v.name}</span><div class="stepper"><button data-minus-id="${v.id}" aria-label="Убрать ${v.name}" ${count?'':'disabled'}>−</button><span>${count}</span><button data-add="${v.id}" aria-label="Добавить ${v.name}" ${state.items.length>=MAX_ITEMS?'disabled':''}>+</button></div></article>`;
 }
 function render(animate=false){
  draw(animate);controls();const filtered=CATALOG.filter(v=>v.category===state.category);let html='';
  if(state.step===0)html=`<h2>Соберите букет<br>с характером</h2><p class="description">Выберите основу, а затем добавьте цветы, вкусное, полезное и топперы. Каждый предмет можно передвинуть прямо в букете.</p>
  <div class="bases">${BASES.map((b,i)=>`<button class="base" data-base="${i}" aria-pressed="${state.base===i}">${thumb(b.icon,b.palette)}<span>${b.name}</span></button>`).join('')}</div>
- <div class="section-label">Полка с приятностями <button class="inline-link" id="view-selected">В букете: ${state.items.length} / 15</button></div>
+ <div class="section-label">Полка с приятностями <button class="inline-link" id="view-selected">В букете: ${state.items.length} / ${MAX_ITEMS}</button></div>
  <div class="categories">${CATEGORIES.map(c=>`<button data-category="${c}" aria-pressed="${state.category===c}">${c}</button>`).join('')}</div>
  <div class="shelf">${filtered.map(card).join('')}</div>
  <button class="surprise" id="surprise">Собрать случайный букет <span>↗</span></button>
- <div class="section-label">Уже в букете <small>${state.items.length} / 15</small></div>
+ <div class="section-label">Уже в букете <small>${state.items.length} / ${MAX_ITEMS}</small></div>
  <div class="selected-items" id="selected-list">${state.items.map(i=>`<div class="selected-row">${thumb(i.id,state.palette)}<span>${itemName(i.id)}</span><button class="mini" data-remove="${i.uid}">Убрать</button></div>`).join('')||'<p class="tip">Пока пусто. Добавьте первый предмет.</p>'}</div>`;
  else if(state.step===1)html=`<h2>Последний штрих</h2><p class="description">Выберите палитру цветов, бумагу, ленту и стартовую композицию. После этого предметы всё ещё можно двигать вручную.</p>
  <fieldset><legend>Палитра цветов</legend><div class="options">${PALETTES.map((p,i)=>`<button class="color" data-palette="${i}" aria-pressed="${state.palette===i}" aria-label="${p.name}">${p.colors.slice(0,3).map(c=>`<span style="background:${c}"></span>`).join('')}</button>`).join('')}</div><div class="color-name">${PALETTES[state.palette].name} · меняет цветы и зелень</div></fieldset>
@@ -85,7 +86,7 @@ function go(step){if(exporting||step>0&&!state.items.length)return;state.step=st
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||exporting)return;
  if(b.dataset.base!==undefined){remember();state.base=+b.dataset.base;const base=BASES[state.base];state.items=base.items.map(makeItem);state.palette=base.palette;state.wrap=base.wrap;state.category=state.base===1?'Вкусное':state.base===2?'Для дела':'Цветы';state.customLayout=false;ensurePositions(state,true);render(true);return}
  if(b.dataset.category){state.category=b.dataset.category;render();return}
- if(b.dataset.add){if(state.items.length>=15){notice('В букете уже 15 предметов');return}remember();state.items.push(makeItem(b.dataset.add));ensurePositions(state);render(true);return}
+ if(b.dataset.add){if(state.items.length>=MAX_ITEMS){notice(`В букете уже ${MAX_ITEMS} предмета`);return}remember();state.items.push(makeItem(b.dataset.add));ensurePositions(state);render(true);return}
  if(b.dataset.minusId){const found=[...state.items].reverse().find(i=>i.id===b.dataset.minusId);if(found){remember();state.items=state.items.filter(i=>i.uid!==found.uid);render()}return}
  if(b.dataset.remove){remember();state.items=state.items.filter(i=>i.uid!==+b.dataset.remove);render();return}
  if(b.id==='view-selected'){document.querySelector('#selected-list')?.scrollIntoView({behavior:'smooth'});return}
@@ -94,7 +95,7 @@ $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!
  if(b.dataset.phrase!==undefined){state.message=PHRASES[+b.dataset.phrase];state.lastPhrase=+b.dataset.phrase;render();return}
  if(b.id==='random-phrase'){let i;do{i=Math.floor(Math.random()*PHRASES.length)}while(i===state.lastPhrase);state.lastPhrase=i;state.message=PHRASES[i];render();return}
  if(b.id==='show-phrases'){state.phrasesOpen=!state.phrasesOpen;render();return}
- if(b.id==='surprise'){remember();const pool=CATALOG.filter(x=>x.category!=='Топперы');const topper=CATALOG.filter(x=>x.category==='Топперы');state.items=Array.from({length:7+Math.floor(Math.random()*5)},()=>makeItem(pool[Math.floor(Math.random()*pool.length)].id));if(Math.random()>.35)state.items.push(makeItem(topper[Math.floor(Math.random()*topper.length)].id));state.items=state.items.slice(0,15);state.customLayout=false;ensurePositions(state,true);render(true);notice('Готово! Всё можно поменять и передвинуть.');return}
+ if(b.id==='surprise'){remember();const pool=CATALOG.filter(x=>x.category!=='Топперы');const topper=CATALOG.filter(x=>x.category==='Топперы');state.items=Array.from({length:12+Math.floor(Math.random()*7)},()=>makeItem(pool[Math.floor(Math.random()*pool.length)].id));if(Math.random()>.25)state.items.push(makeItem(topper[Math.floor(Math.random()*topper.length)].id));state.items=state.items.slice(0,MAX_ITEMS);state.customLayout=false;ensurePositions(state,true);render(true);notice('Готово! Всё можно поменять и передвинуть.');return}
  if(b.id==='back-shelf')go(0);
 });
 $('#panel').addEventListener('input',e=>{if(e.target.id==='message'){state.message=e.target.value;$('#count').textContent=`${state.message.length} / 450`;draw()}});
@@ -104,9 +105,10 @@ $('#shuffle').onclick=()=>{remember();state.shape=(state.shape+1)%3;state.custom
 $('#undo').onclick=()=>{if(!previous)return;const current=snapshot();state=previous;previous=current;render(true)};
 $('#restart').onclick=()=>{if(!confirm('Начать новый букет?'))return;state={step:0,base:0,category:'Цветы',items:BASES[0].items.map(makeItem),palette:0,wrap:0,ribbon:0,shape:0,seed:Date.now(),message:PHRASES[0],title:0,selectedUid:null,customLayout:false,phrasesOpen:false,lastPhrase:0};previous=null;ensurePositions(state,true);render()};
 function point(e,svg){const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left)*500/r.width,y:(e.clientY-r.top)*590/r.height}}
-$('#art').addEventListener('pointerdown',e=>{if(state.step===2)return;const g=e.target.closest('[data-bouquet-item]');if(!g)return;e.preventDefault();const uid=+g.dataset.bouquetItem,item=state.items.find(i=>i.uid===uid),svg=g.ownerSVGElement,p=point(e,svg);remember();item.z=Math.max(0,...state.items.map(i=>i.z||0))+1;state.selectedUid=uid;drag={uid,dx:p.x-item.x,dy:p.y-item.y,svg,moved:false};g.setPointerCapture?.(e.pointerId);draw()});
-$('#art').addEventListener('pointermove',e=>{if(!drag)return;e.preventDefault();const item=state.items.find(i=>i.uid===drag.uid),p=point(e,drag.svg);item.x=Math.max(55,Math.min(445,p.x-drag.dx));item.y=Math.max(55,Math.min(440,p.y-drag.dy));state.customLayout=true;drag.moved=true;draw()});
-function endDrag(){if(drag?.moved)notice('Своя композиция сохранена');drag=null}
+function itemTransform(item){return `translate(${item.x} ${item.y}) rotate(${item.rotation||0}) scale(${item.scale||.9})`}
+$('#art').addEventListener('pointerdown',e=>{if(state.step===2)return;const g=e.target.closest('[data-bouquet-item]');if(!g)return;e.preventDefault();const uid=+g.dataset.bouquetItem,item=state.items.find(i=>i.uid===uid),svg=g.ownerSVGElement,p=point(e,svg);remember();item.z=Math.max(0,...state.items.map(i=>i.z||0))+1;state.selectedUid=uid;document.querySelectorAll('.bouquet-object').forEach(el=>el.classList.toggle('is-selected',el===g));drag={uid,dx:p.x-item.x,dy:p.y-item.y,svg,el:g,moved:false,pointerId:e.pointerId};e.currentTarget.setPointerCapture?.(e.pointerId)});
+$('#art').addEventListener('pointermove',e=>{if(!drag)return;e.preventDefault();const item=state.items.find(i=>i.uid===drag.uid),p=point(e,drag.svg);item.x=Math.max(70,Math.min(430,p.x-drag.dx));item.y=Math.max(100,Math.min(430,p.y-drag.dy));state.customLayout=true;drag.moved=true;drag.el.setAttribute('transform',itemTransform(item))});
+function endDrag(e){if(!drag)return;try{$('#art').releasePointerCapture?.(drag.pointerId)}catch{}if(drag.moved){draw();notice('Своя композиция сохранена')}drag=null}
 $('#art').addEventListener('pointerup',endDrag);$('#art').addEventListener('pointercancel',endDrag);
 function openPreview(){const d=$('#large-preview');$('#large-art').innerHTML=postcard(state);d.showModal()}
 $('#zoom').onclick=openPreview;$('#close-preview').onclick=()=>$('#large-preview').close();$('#large-preview').addEventListener('click',e=>{if(e.target===$('#large-preview'))e.currentTarget.close()});
