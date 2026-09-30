@@ -103,3 +103,64 @@ for(let i=0;i<6;i++){let x=100+r()*300,y=240+r()*120;leaves+=`<path d="M250 470 
 s.items.forEach((o,i)=>{let [x,y]=pos[i];x+=(r()-.5)*23;y+=(r()-.5)*18;let rotation=(r()-.5)*26,scale=(s.items.length>11?.69:s.items.length>8?.78:.9)+r()*.14;if(!['inspiration','thanks','flag'].includes(o.id))stems+=`<path d="M250 480 Q${x} ${y+110} ${x} ${y}" stroke="#738a54" stroke-width="3" fill="none"/>`;if(['inspiration','thanks','flag'].includes(o.id)){let labelIndex=s.items.slice(0,i).filter(v=>['inspiration','thanks','flag'].includes(v.id)).length;let lx=108+(labelIndex%4)*96,ly=350+Math.floor(labelIndex/4)*55;labels+=`<g transform="translate(${lx} ${ly}) scale(.79)">${itemArt(o.id,colors,o.variant)}</g>`;return;}objects+=`<g transform="translate(${x} ${y}) rotate(${rotation}) scale(${scale})"><g ${animate?'class="arrival"':''}>${itemArt(o.id,colors,o.variant)}</g></g>`;});
 const wc=['#c7b2e0','#c3a17d','#e5e5d9','#41434b'][s.wrap],rc=['#5b39f5','#e9a18a','#dde4b1'][s.ribbon];const wrap=`<g class="${animate?'wrap-reveal':''}"><path d="M74 320 L237 374 L427 310 L310 538 Q249 560 194 534Z" fill="${wc}"/><path d="M74 320 L250 464 L194 534Z" fill="white" opacity=".2"/><path d="M427 310 L250 464 L310 538Z" fill="#252136" opacity=".17"/><path d="M117 340 L229 503 M379 337 L274 504" stroke="white" opacity=".2"/><path d="M190 473 Q244 488 312 473" stroke="${rc}" stroke-width="11" fill="none"/><g transform="translate(250 477)"><path d="M0 0 C-83 -54 -74 29 0 0 C82 -51 82 26 0 0 M-2 1 Q-10 37 -31 65 L-8 56 L3 64 Q22 19 2 0 M3 0 Q32 26 42 60 L26 55 L21 64 Q13 28 0 0" fill="${rc}"/><path d="M0 0 Q-33 -23 -51 -9 M0 0 Q34 -24 54 -7" fill="none" stroke="white" opacity=".3"/></g></g>`;
 return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 590" aria-label="Ваш букет из ${s.items.length} предметов" role="img"><defs><filter id="paper-shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="2" dy="6" stdDeviation="4" flood-color="#303221" flood-opacity=".12"/></filter></defs><g filter="url(#paper-shadow)">${s.items.length?leaves+stems+objects+wrap+labels:'<path d="M100 320 L250 390 L400 320 L300 530 H200Z" fill="#e1dccd"/><text x="250" y="270" text-anchor="middle" font-family="Arial" font-size="18" fill="#40521d">Добавьте первый предмет</text>'}</g></svg>`;}
+
+/* 2026 Skillbox edition: new categories, toppers and editable composition. */
+const TOPPER_LABELS={
+  thanks:['Спасибо!'],flag:['Вы','супер'],inspiration:['+100','к вдохновению'],
+  topper_teacher:['С Днём','учителя'],topper_best:['Лучший','куратор'],
+  topper_knowledge:['Главный','по знаниям'],topper_support:['Спасибо','за поддержку'],
+  topper_patience:['Спасибо','за терпение'],topper_inspire:['Вы','вдохновляете'],
+  topper_for_you:['Для вас','💙']
+};
+const TOPPER_IDS=new Set(Object.keys(TOPPER_LABELS));
+CATALOG.splice(0,CATALOG.length,...CATALOG.filter(x=>!['moon','cloud','rainbow'].includes(x.id)).map(x=>TOPPER_IDS.has(x.id)?{...x,category:'Топперы'}:x));
+CATALOG.push(
+  {id:'topper_teacher',name:'С Днём учителя',category:'Топперы'},
+  {id:'topper_best',name:'Лучший куратор',category:'Топперы'},
+  {id:'topper_knowledge',name:'Главный по знаниям',category:'Топперы'},
+  {id:'topper_support',name:'Спасибо за поддержку',category:'Топперы'},
+  {id:'topper_patience',name:'Спасибо за терпение',category:'Топперы'},
+  {id:'topper_inspire',name:'Вы вдохновляете',category:'Топперы'},
+  {id:'topper_for_you',name:'Для вас',category:'Топперы'},
+  {id:'console',name:'Игровая консоль',category:'Увлечения'},
+  {id:'keyboard',name:'Клавиатура',category:'Для дела'},
+  {id:'memes',name:'Папка мемов',category:'Для дела'},
+  {id:'snacks',name:'Снэки',category:'Вкусное'},
+  {id:'cheese',name:'Сыр',category:'Вкусное'},
+  {id:'guitar',name:'Гитара',category:'Увлечения'}
+);
+const BOUQUET_LAYOUTS=[
+ [[175,177],[320,173],[245,105],[107,292],[371,286],[243,265],[166,300],[324,300],[93,221],[400,215],[248,338],[120,120],[386,123],[245,207],[348,248]],
+ [[145,175],[337,193],[235,94],[104,302],[390,311],[255,270],[189,316],[330,318],[78,235],[422,238],[262,348],[108,107],[387,113],[244,202],[349,265]],
+ [[157,222],[310,119],[229,161],[99,334],[367,256],[280,304],[181,312],[349,320],[78,250],[412,190],[264,354],[112,125],[365,96],[251,246],[340,215]]
+];
+const oldItemArt=itemArt;
+function topperArtwork(id,variant=0){
+  const lines=TOPPER_LABELS[id],fill=['#3D3BFF','#000000','#FFC38E','#F7C8FF'][variant%4],ink=variant%4<2?'#fff':'#000';
+  const h=lines.length>1?78:62,y=lines.length>1?-13:7;
+  return `<path d="M0 82V${h/2-3}" stroke="#171717" stroke-width="5"/><rect x="-70" y="${-h/2}" width="140" height="${h}" rx="15" fill="${fill}"/>${lines.map((t,i)=>`<text x="0" y="${y+i*24}" text-anchor="middle" font-family="Graphik,Arial,sans-serif" font-size="${lines.length>1?18:21}" font-weight="600" fill="${ink}">${t}</text>`).join('')}`;
+}
+itemArt=function(id,colors,variant=0){
+  if(TOPPER_LABELS[id])return topperArtwork(id,variant);
+  if(id==='console')return '<rect x="-48" y="-28" width="96" height="57" rx="22" fill="#3D3BFF"/><path d="M-27 0h22M-16-11v22" stroke="#fff" stroke-width="6"/><circle cx="22" cy="-7" r="5" fill="#FFC38E"/><circle cx="35" cy="7" r="5" fill="#F7C8FF"/>';
+  if(id==='keyboard')return '<g transform="rotate(-8)"><rect x="-58" y="-34" width="116" height="68" rx="10" fill="#252525"/><g fill="#fff" opacity=".8">'+Array.from({length:4},(_,y)=>Array.from({length:7},(_,x)=>`<rect x="${-47+x*14}" y="${-25+y*13}" width="10" height="9" rx="2"/>`).join('')).join('')+'</g></g>';
+  if(id==='memes')return '<path d="M-49-38h38l10 12h50v72h-98z" fill="#FFC38E"/><rect x="-34" y="-10" width="68" height="38" rx="7" fill="#fff"/><text x="0" y="14" text-anchor="middle" font-family="Graphik,Arial" font-size="18" font-weight="600">мемы</text>';
+  if(id==='snacks')return '<path d="M-38-55h76l-8 110h-60z" fill="#3D3BFF"/><path d="M-31-42h62M-28 42h56" stroke="#fff" stroke-width="4"/><text x="0" y="8" text-anchor="middle" font-family="Graphik,Arial" font-size="16" font-weight="600" fill="#fff">снэки</text>';
+  if(id==='cheese')return '<path d="M-50 34L39-35L54 35z" fill="#FFC94D"/><circle cx="9" cy="2" r="9" fill="#D99A32"/><circle cx="30" cy="22" r="6" fill="#D99A32"/><circle cx="-18" cy="24" r="7" fill="#D99A32"/>';
+  if(id==='guitar')return '<g transform="rotate(14)"><path d="M-7 18L2-70h10L4 20" fill="#5B3B2C"/><path d="M3-70h18v12H2" fill="#222"/><path d="M0 4C-57-34-62 42-15 51C31 72 55 16 17-2C6-8 8 13 0 4Z" fill="#FFC38E"/><circle cx="8" cy="24" r="13" fill="#31241E"/></g>';
+  let art=oldItemArt(id,colors,variant);
+  const green=colors[3]||'#748e57',green2=colors[1]||green;
+  return art.replace(/#(?:6d8d65|5d7c66|749785|648251|78945b|8ba568|738a54|748e57|688951|8fa36e|7a8657|9da981|7c9766|667c53)/gi,(m,i)=>i%2?green2:green);
+};
+function ensurePositions(s,reset=false){
+  const pos=BOUQUET_LAYOUTS[s.shape]||BOUQUET_LAYOUTS[0];
+  s.items.forEach((o,i)=>{if(reset||!Number.isFinite(o.x)){const p=pos[i%pos.length];o.x=p[0];o.y=p[1];o.rotation=((o.uid*17)%25)-12;o.scale=(s.items.length>11?.7:s.items.length>8?.79:.91)+((o.uid%5)*.025);o.z=i;}});
+}
+bouquet=function(s,animate=false,interactive=true){
+  ensurePositions(s);const colors=PALETTES[s.palette].colors,green=colors[3]||'#748e57';let stems='',objects='',top='',leaves='';
+  for(let i=0;i<6;i++){const x=82+i*66,y=226+(i%3)*27;leaves+=`<path d="M250 480Q${x} ${y+65} ${x} ${y}" stroke="${green}" stroke-width="3" fill="none"/><path d="M${x} ${y+30}q-34-2-31-34q34 0 31 34q35-3 28-35q-28 4-28 35" fill="${green}" opacity=".82"/>`;}
+  [...s.items].sort((a,b)=>(a.z||0)-(b.z||0)).forEach(o=>{const selected=interactive&&s.selectedUid===o.uid,content=`<g class="bouquet-object${selected?' is-selected':''}" data-bouquet-item="${o.uid}" transform="translate(${o.x} ${o.y}) rotate(${o.rotation||0}) scale(${o.scale||.9})"><rect class="selection-ring" x="-73" y="-108" width="146" height="200" rx="22" fill="none" stroke="#3D3BFF" stroke-width="3"/>${itemArt(o.id,colors,o.variant)}</g>`;if(TOPPER_IDS.has(o.id)){top+=content}else{stems+=`<path d="M250 480Q${o.x} ${o.y+100} ${o.x} ${o.y}" stroke="${green}" stroke-width="3" fill="none"/>`;objects+=content}});
+  const wc=['#968BAB','#B99775','#F0EEE8','#202020'][s.wrap],rc=['#3D3BFF','#FFC38E','#F7C8FF'][s.ribbon];
+  const wrap=`<g class="${animate?'wrap-reveal':''}"><path d="M74 320L237 374L427 310L310 538Q249 560 194 534Z" fill="${wc}"/><path d="M74 320L250 464L194 534Z" fill="#fff" opacity=".2"/><path d="M427 310L250 464L310 538Z" fill="#000" opacity=".15"/><path d="M190 473Q244 488 312 473" stroke="${rc}" stroke-width="11" fill="none"/><g transform="translate(250 477)"><path d="M0 0C-83-54-74 29 0 0C82-51 82 26 0 0M-2 1Q-10 37-31 65L-8 56L3 64Q22 19 2 0M3 0Q32 26 42 60L26 55L21 64Q13 28 0 0" fill="${rc}"/></g></g>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 590" aria-label="Ваш букет из ${s.items.length} предметов" role="img"><g>${s.items.length?leaves+stems+objects+wrap+top:'<path d="M100 320L250 390L400 320L300 530H200Z" fill="#e7e7e7"/><text x="250" y="270" text-anchor="middle" font-family="Graphik,Arial" font-size="18">Добавьте первый предмет</text>'}</g></svg>`;
+};

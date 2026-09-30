@@ -1,44 +1,116 @@
 const $=s=>document.querySelector(s);
-const BASES=[{name:'Цветочный',icon:'peony',items:['peony','daisy','tulip','eucalyptus','cosmos'],palette:0,wrap:0},{name:'Кофе и уют',icon:'coffee',items:['coffee','chocolate','tea','cookie','olive'],palette:1,wrap:1},{name:'Вдохновение',icon:'brush',items:['notebook','brush','pencil','star','fern'],palette:4,wrap:3},{name:'Свой микс',icon:'heart',items:['tulip','coffee','heart','eucalyptus'],palette:4,wrap:2}];
-const PHRASES=['С Днём учителя! Спасибо за поддержку, внимание и вдохновение. Пусть каждый день приносит что-то хорошее!','Спасибо, что вы рядом. За ответы на вопросы, добрые слова и желание помочь. Очень ценю это!','Вдохновения, приятных открытий и времени на любимые дела. Этот букет — с большим спасибо!'];
+const BASES=[
+ {name:'Цветочный',icon:'peony',items:['peony','daisy','tulip','eucalyptus','cosmos'],palette:0,wrap:0},
+ {name:'Кофе и уют',icon:'coffee',items:['coffee','chocolate','tea','cookie','olive'],palette:1,wrap:1},
+ {name:'Вдохновение',icon:'brush',items:['notebook','brush','pencil','star','fern'],palette:4,wrap:3},
+ {name:'Свой микс',icon:'heart',items:['tulip','coffee','heart','eucalyptus'],palette:4,wrap:2}
+];
+const PHRASES=[
+'С Днём учителя! Спасибо за поддержку, внимание и вдохновение. Пусть каждый день приносит что-то хорошее!',
+'Спасибо, что вы рядом. За ответы на вопросы, добрые слова и желание помочь. Очень ценю это!',
+'Спасибо, что создаёте ламповую атмосферу в нашем чате. Ваша поддержка на каждом шагу помогает не опускать руки на сложных модулях!',
+'Спасибо за терпение, заботу и спокойное «давайте разберёмся». С вами сложное становится понятным.',
+'Вы тот человек, после разговора с которым снова хочется открыть урок и попробовать ещё раз. Спасибо!',
+'Спасибо, что верите в нас даже тогда, когда мы сами немного сомневаемся.',
+'С Днём учителя! Пусть вопросов без ответов будет меньше, а поводов гордиться своими студентами — больше.',
+'Спасибо за поддержку без лишнего пафоса, полезные советы и ощущение, что мы правда команда.',
+'Спасибо, что помогаете не потеряться в дедлайнах, модулях и собственных идеях.',
+'Ваши комментарии всегда по делу и с заботой. Спасибо, что помогаете становиться лучше.',
+'Спасибо, что умеете объяснить ещё раз, ещё проще и без капли раздражения.',
+'С вами не страшно ошибаться, спрашивать и начинать заново. Это очень ценно.',
+'Спасибо за честную обратную связь, добрые слова и маленькие победы, которые вы замечаете.',
+'Вы помогли мне вырасти — в знаниях, уверенности и умении не сдаваться. Спасибо!',
+'Спасибо за вдохновение и тот самый нужный пинок, после которого всё наконец получается.',
+'Пусть энергии хватает на все чаты, проверки и наши бесконечные «а можно ещё вопрос?». Спасибо вам!',
+'Спасибо, что превращаете обучение из марафона в путь, который хочется пройти до конца.',
+'Ваше «всё получится» работает лучше кофе. Спасибо, что всегда находите нужные слова.',
+'Спасибо за мемы, поддержку и знания — идеальный набор для хорошей учёбы.',
+'Спасибо, что держите руку на пульсе, а нас — в фокусе. С вами гораздо спокойнее.',
+'Вы делаете больше, чем просто отвечаете на вопросы. Вы помогаете поверить в себя.',
+'Спасибо за тёплую атмосферу, в которой хочется делиться идеями и не бояться быть новичком.',
+'За каждое понятное объяснение, быстрый ответ и бережную обратную связь — большое спасибо!',
+'Пусть работа радует, студенты удивляют, а свободного времени становится больше.',
+'Этот букет — маленькое спасибо за ваш большой вклад. С Днём учителя!'
+];
+const CATEGORIES=['Цветы','Зелень','Вкусное','Для дела','Украшения','Увлечения','Топперы'];
 let nextUid=0;
-const makeItem=id=>({id,uid:++nextUid,variant:Math.floor(Math.random()*4),locked:false});
-let state={step:0,base:0,category:'Цветы',items:BASES[0].items.map(makeItem),palette:0,wrap:0,ribbon:0,shape:0,seed:Math.floor(Math.random()*1e8),message:PHRASES[0],title:0};
-let previous=null,exporting=false;
-function notice(t){$('#toast').textContent=t;$('#toast').classList.add('show');clearTimeout(notice.timer);notice.timer=setTimeout(()=>$('#toast').classList.remove('show'),3200);}
-function name(id){return CATALOG.find(x=>x.id===id).name;}
-function snapshot(){return JSON.parse(JSON.stringify(state));}
-function optionGroup(label,items,key){return`<fieldset><legend>${label}</legend><div class="options">${items.map((v,i)=>`<button class="option" data-${key}="${i}" aria-pressed="${state[key]===i}">${v}</button>`).join('')}</div></fieldset>`;}
-function draw(animate=false){$('.stage').classList.toggle('card-mode',state.step===2);$('#art').innerHTML=state.step===2?postcard(state):bouquet(state,animate);$('#composition-name').textContent=state.step===2?'Ваша открытка':`${BASES[state.base].name} · ${state.items.length} из 15 предметов`;$('#undo').disabled=!previous||exporting;$('#shuffle').disabled=!state.items.length||exporting;}
-function controls(){document.querySelectorAll('[data-step]').forEach((b,i)=>{b.setAttribute('aria-current',i===state.step?'step':'false');b.disabled=exporting||(i>0&&!state.items.length);});$('#next').disabled=exporting||!state.items.length;$('#restart').disabled=exporting;$('#help').textContent=state.step===0?'Можно собрать букет совсем без цветов':state.step===1?'Любое сочетание можно изменить':'Текст остаётся только на вашем устройстве';$('#next').innerHTML=exporting?'Сохраняем открытку…':state.step===0?'Завернуть букет <span>→</span>':state.step===1?'Написать поздравление <span>→</span>':'Скачать открытку <span>↓</span>';}
-function render(animate=false){let active=document.activeElement,focusId=active?.id,data=active?.dataset?Object.entries(active.dataset)[0]:null;draw(animate);controls();const panel=$('#panel');const filtered=CATALOG.filter(v=>v.category===state.category);let html='';
-if(state.step===0){html=`<h2>Какой у вас букет?</h2><p class="description">Начните с готовой основы. А дальше —<br>добавьте то, что порадует вашего куратора.</p><div class="bases">${BASES.map((b,i)=>`<button class="base" data-base="${i}" aria-pressed="${state.base===i}">${thumb(b.icon,b.palette)}<span>${b.name}</span></button>`).join('')}</div><div class="section-label">Полка с приятностями <button class="inline-link" id="view-selected">В букете: ${state.items.length} / 15</button></div><div class="categories" aria-label="Категории">${['Цветы','Зелень','Вкусное','Для дела','Украшения','Увлечения'].map(c=>`<button data-category="${c}" aria-pressed="${state.category===c}">${c}</button>`).join('')}</div><div class="shelf">${filtered.map(v=>{let count=state.items.filter(i=>i.id===v.id).length;return`<button class="item" data-add="${v.id}" aria-label="Добавить: ${v.name}">${thumb(v.id,state.palette)}<span class="item-name">${v.name}</span><span class="add" aria-hidden="true">+</span>${count?`<span class="quantity" aria-label="В букете ${count}">${count}</span>`:''}</button>`}).join('')}</div><div class="section-label">Уже в букете <small>${state.items.length} / 15</small></div><div class="selected-items" id="selected-list" tabindex="-1">${state.items.map(i=>`<div class="selected-row">${thumb(i.id,state.palette)}<span>${name(i.id)}</span><button class="mini" data-lock="${i.uid}" aria-pressed="${i.locked}" aria-label="${i.locked?'Открепить':'Закрепить'}: ${name(i.id)}">${i.locked?'Закреплён':'Закрепить'}</button><button class="mini" data-remove="${i.uid}" aria-label="Убрать: ${name(i.id)}">Убрать</button></div>`).join('')||'<p class="tip">Пока пусто. Добавьте что-нибудь с полки.</p>'}</div><button class="surprise" id="surprise">Удивите меня <span>↗</span></button><p class="tip">Закрепите любимые предметы — они останутся,<br>когда вы попробуете случайный вариант.</p>`;
-}else if(state.step===1){html=`<h2>Последний штрих.</h2><p class="description">Бумага, лента и немного вашего настроения.<br>Подарок почти готов.</p><fieldset><legend>Цветочное настроение</legend><div class="options">${PALETTES.map((p,i)=>`<button class="color" data-palette="${i}" aria-pressed="${state.palette===i}" aria-label="${p.name}" title="${p.name}">${p.colors.slice(0,3).map(c=>`<span style="background:${c}"></span>`).join('')}</button>`).join('')}</div><div class="color-name">${PALETTES[state.palette].name} · меняет оттенки цветов</div></fieldset>${optionGroup('Упаковка',['Лиловая','Крафт','Молочная','Графит'],'wrap')}${optionGroup('Лента',['Фиолетовая','Персиковая','Светлая'],'ribbon')}${optionGroup('Композиция',['Компактная','Пышная','Свободная'],'shape')}<p class="tip">Хотите добавить ещё что-нибудь?<br><button class="inline-link" id="back-shelf">Вернуться к полке</button></p>`;
-}else{html=`<h2>Теперь — пару<br>тёплых слов.</h2><p class="description">Для куратора, преподавателя или всей команды.<br>Готовая фраза или ваше личное спасибо.</p>${optionGroup('Заголовок',['Большое спасибо!','С Днём учителя!','Этот букет — вам'],'title')}<label class="field-label" for="message">Ваше поздравление</label><textarea id="message" maxlength="350" rows="5" placeholder="Напишите свои слова благодарности…">${esc(state.message)}</textarea><div class="text-meta"><span>Никуда не отправляется</span><span id="count">${state.message.length} / 350</span></div><div class="section-label">Если сложно подобрать слова</div><div class="phrases">${['За поддержку и вдохновение','Спасибо, что вы рядом','Пожелать хорошего'].map((p,i)=>`<button class="option" data-phrase="${i}">${p}</button>`).join('')}</div><p class="tip">Открытка сохранится картинкой PNG.<br>Отправьте её в чат тому, кого хочется порадовать.</p><button class="inline-link" id="open-card">Рассмотреть открытку крупно</button>`;}
-panel.innerHTML=html;if(focusId)document.getElementById(focusId)?.focus({preventScroll:true});else if(data){let [k,v]=data;const replacement=document.querySelector(`[data-${k}="${CSS.escape(v)}"]`);if(replacement)replacement.focus({preventScroll:true});else if(k==='remove')document.querySelector('[data-remove], [data-add]')?.focus({preventScroll:true});}}
-function go(step){if(exporting||step>0&&!state.items.length)return;state.step=step;render(step===1);$('#panel').scrollTop=0;const heading=$('#panel h2');heading.tabIndex=-1;heading.focus({preventScroll:true});}
-function remember(){previous=snapshot();}
+const makeItem=id=>({id,uid:++nextUid,variant:Math.floor(Math.random()*4),x:null,y:null,rotation:0,scale:.9,z:nextUid});
+let state={step:0,base:0,category:'Цветы',items:BASES[0].items.map(makeItem),palette:0,wrap:0,ribbon:0,shape:0,seed:Date.now(),message:PHRASES[0],title:0,selectedUid:null,customLayout:false,phrasesOpen:false,lastPhrase:0};
+let previous=null,exporting=false,drag=null;
+const itemName=id=>CATALOG.find(x=>x.id===id)?.name||id;
+const snapshot=()=>JSON.parse(JSON.stringify(state));
+function remember(){previous=snapshot()}
+function notice(t){$('#toast').textContent=t;$('#toast').classList.add('show');clearTimeout(notice.timer);notice.timer=setTimeout(()=>$('#toast').classList.remove('show'),2600)}
+function optionGroup(label,items,key){return `<fieldset><legend>${label}</legend><div class="options">${items.map((v,i)=>`<button class="option" data-${key}="${i}" aria-pressed="${state[key]===i}">${v}</button>`).join('')}</div></fieldset>`}
+function draw(animate=false){
+  $('.stage').classList.toggle('card-mode',state.step===2);
+  $('#drag-hint').classList.toggle('hidden',state.step===2||!state.items.length);
+  $('#art').innerHTML=state.step===2?postcard(state):bouquet(state,animate,true);
+  $('#composition-name').textContent=state.step===2?'Ваша открытка':`${state.customLayout?'Своя композиция':BASES[state.base].name} · ${state.items.length} из 15`;
+  $('#undo').disabled=!previous||exporting;$('#shuffle').disabled=!state.items.length||exporting;
+}
+function controls(){
+ document.querySelectorAll('[data-step]').forEach((b,i)=>{b.setAttribute('aria-current',i===state.step?'step':'false');b.disabled=exporting||(i>0&&!state.items.length)});
+ $('#next').disabled=exporting||!state.items.length;$('#restart').disabled=exporting;
+ $('#help').textContent=state.step===0?'До 15 предметов. Любой можно передвинуть.':state.step===1?'Палитра, упаковка и композиция':'Текст остаётся только на вашем устройстве';
+ $('#next').innerHTML=exporting?'Сохраняем…':state.step===0?'Завернуть букет <span>→</span>':state.step===1?'Написать поздравление <span>→</span>':'Скачать открытку <span>↓</span>';
+}
+function card(v){
+ const count=state.items.filter(i=>i.id===v.id).length;
+ return `<article class="item-card">${thumb(v.id,state.palette)}<span class="item-name">${v.name}</span><div class="stepper"><button data-minus-id="${v.id}" aria-label="Убрать ${v.name}" ${count?'':'disabled'}>−</button><span>${count}</span><button data-add="${v.id}" aria-label="Добавить ${v.name}" ${state.items.length>=15?'disabled':''}>+</button></div></article>`;
+}
+function render(animate=false){
+ draw(animate);controls();const filtered=CATALOG.filter(v=>v.category===state.category);let html='';
+ if(state.step===0)html=`<h2>Соберите букет<br>с характером</h2><p class="description">Выберите основу, а затем добавьте цветы, вкусное, полезное и топперы. Каждый предмет можно передвинуть прямо в букете.</p>
+ <div class="bases">${BASES.map((b,i)=>`<button class="base" data-base="${i}" aria-pressed="${state.base===i}">${thumb(b.icon,b.palette)}<span>${b.name}</span></button>`).join('')}</div>
+ <div class="section-label">Полка с приятностями <button class="inline-link" id="view-selected">В букете: ${state.items.length} / 15</button></div>
+ <div class="categories">${CATEGORIES.map(c=>`<button data-category="${c}" aria-pressed="${state.category===c}">${c}</button>`).join('')}</div>
+ <div class="shelf">${filtered.map(card).join('')}</div>
+ <button class="surprise" id="surprise">Собрать случайный букет <span>↗</span></button>
+ <div class="section-label">Уже в букете <small>${state.items.length} / 15</small></div>
+ <div class="selected-items" id="selected-list">${state.items.map(i=>`<div class="selected-row">${thumb(i.id,state.palette)}<span>${itemName(i.id)}</span><button class="mini" data-remove="${i.uid}">Убрать</button></div>`).join('')||'<p class="tip">Пока пусто. Добавьте первый предмет.</p>'}</div>`;
+ else if(state.step===1)html=`<h2>Последний штрих</h2><p class="description">Выберите палитру цветов, бумагу, ленту и стартовую композицию. После этого предметы всё ещё можно двигать вручную.</p>
+ <fieldset><legend>Палитра цветов</legend><div class="options">${PALETTES.map((p,i)=>`<button class="color" data-palette="${i}" aria-pressed="${state.palette===i}" aria-label="${p.name}">${p.colors.slice(0,3).map(c=>`<span style="background:${c}"></span>`).join('')}</button>`).join('')}</div><div class="color-name">${PALETTES[state.palette].name} · меняет цветы и зелень</div></fieldset>
+ ${optionGroup('Упаковка',['Лиловая','Крафт','Молочная','Графит'],'wrap')}${optionGroup('Лента',['Фиолетовая','Персиковая','Розовая'],'ribbon')}${optionGroup('Композиция',['Компактная','Пышная','Свободная'],'shape')}
+ <p class="tip">Хотите добавить ещё что-нибудь? <button class="inline-link" id="back-shelf">Вернуться к полке</button></p>`;
+ else html=`<h2>Добавьте<br>тёплые слова</h2><p class="description">Для куратора чата, куратора на платформе, спикера или всей команды.</p>
+ ${optionGroup('Заголовок',['Большое спасибо!','С Днём учителя!','Этот букет — вам'],'title')}
+ <label class="field-label" for="message">Ваше поздравление</label><textarea id="message" maxlength="450" rows="5" placeholder="Напишите свои слова благодарности…">${esc(state.message)}</textarea>
+ <div class="text-meta"><span>Никуда не отправляется</span><span id="count">${state.message.length} / 450</span></div>
+ <div class="section-label">Если сложно подобрать слова</div><div class="phrase-tools"><button class="phrase-action" id="random-phrase">Предложить поздравление <span>↗</span></button><button class="phrase-action" id="show-phrases">${state.phrasesOpen?'Скрыть варианты':'Посмотреть все 25'}</button></div>
+ <div class="phrase-list ${state.phrasesOpen?'':'hidden'}">${PHRASES.map((p,i)=>`<button data-phrase="${i}">${p}</button>`).join('')}</div><p class="tip">Любой готовый вариант можно отредактировать или полностью заменить своим текстом.</p>`;
+ $('#panel').innerHTML=html;
+}
+function go(step){if(exporting||step>0&&!state.items.length)return;state.step=step;state.selectedUid=null;render(step===1);$('#panel').scrollTop=0}
 $('#panel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||exporting)return;
-if(b.dataset.base!==undefined){remember();state.base=+b.dataset.base;const base=BASES[state.base];state.items=base.items.map(makeItem);state.palette=base.palette;state.wrap=base.wrap;state.category=state.base===1?'Вкусное':state.base===2?'Для дела':'Цветы';state.seed=Math.floor(Math.random()*1e8);render(true);notice('Основа готова. Теперь сделайте её своей.');return;}
-if(b.id==='view-selected'){$('#selected-list').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});$('#selected-list').focus({preventScroll:true});return;}if(b.dataset.category){state.category=b.dataset.category;render();return;}
-if(b.dataset.add){if(state.items.length>=15){notice('В букете уже 15 предметов. Уберите один, чтобы добавить новый.');return;}remember();state.items.push(makeItem(b.dataset.add));render(true);return;}
-if(b.dataset.remove){remember();state.items=state.items.filter(x=>x.uid!==+b.dataset.remove);render();return;}
-if(b.dataset.lock){remember();let item=state.items.find(x=>x.uid===+b.dataset.lock);item.locked=!item.locked;render();return;}
-for(let k of ['palette','wrap','ribbon','shape','title'])if(b.dataset[k]!==undefined){remember();state[k]=+b.dataset[k];render(k==='wrap');return;}
-if(b.dataset.phrase!==undefined){state.message=PHRASES[+b.dataset.phrase];render();return;}
-if(b.id==='surprise'){remember();let pool=CATALOG.filter(x=>state.base===1?['Вкусное','Зелень','Украшения'].includes(x.category):state.base===2?['Для дела','Зелень','Украшения'].includes(x.category):state.base===0?['Цветы','Зелень'].includes(x.category):true);state.items=state.items.map(i=>i.locked?i:makeItem(pool[Math.floor(Math.random()*pool.length)].id));if(!state.items.length)state.items=Array.from({length:5},()=>makeItem(pool[Math.floor(Math.random()*pool.length)].id));state.seed=Math.floor(Math.random()*1e8);render(true);notice('Новое сочетание! Закреплённые предметы остались.');return;}
-if(b.id==='back-shelf')go(0);if(b.id==='open-card')openPreview();});
-$('#panel').addEventListener('input',e=>{if(e.target.id==='message'){state.message=e.target.value;$('#count').textContent=`${state.message.length} / 350`;draw();}});
-$('#panel').addEventListener('focusin',e=>{if(e.target.id==='message')document.body.classList.add('typing');});
-$('#panel').addEventListener('focusout',e=>{if(e.target.id==='message')document.body.classList.remove('typing');});
+ if(b.dataset.base!==undefined){remember();state.base=+b.dataset.base;const base=BASES[state.base];state.items=base.items.map(makeItem);state.palette=base.palette;state.wrap=base.wrap;state.category=state.base===1?'Вкусное':state.base===2?'Для дела':'Цветы';state.customLayout=false;ensurePositions(state,true);render(true);return}
+ if(b.dataset.category){state.category=b.dataset.category;render();return}
+ if(b.dataset.add){if(state.items.length>=15){notice('В букете уже 15 предметов');return}remember();state.items.push(makeItem(b.dataset.add));ensurePositions(state);render(true);return}
+ if(b.dataset.minusId){const found=[...state.items].reverse().find(i=>i.id===b.dataset.minusId);if(found){remember();state.items=state.items.filter(i=>i.uid!==found.uid);render()}return}
+ if(b.dataset.remove){remember();state.items=state.items.filter(i=>i.uid!==+b.dataset.remove);render();return}
+ if(b.id==='view-selected'){document.querySelector('#selected-list')?.scrollIntoView({behavior:'smooth'});return}
+ for(const k of ['palette','wrap','ribbon','title'])if(b.dataset[k]!==undefined){remember();state[k]=+b.dataset[k];render(k==='wrap');return}
+ if(b.dataset.shape!==undefined){remember();state.shape=+b.dataset.shape;state.customLayout=false;ensurePositions(state,true);render(true);return}
+ if(b.dataset.phrase!==undefined){state.message=PHRASES[+b.dataset.phrase];state.lastPhrase=+b.dataset.phrase;render();return}
+ if(b.id==='random-phrase'){let i;do{i=Math.floor(Math.random()*PHRASES.length)}while(i===state.lastPhrase);state.lastPhrase=i;state.message=PHRASES[i];render();return}
+ if(b.id==='show-phrases'){state.phrasesOpen=!state.phrasesOpen;render();return}
+ if(b.id==='surprise'){remember();const pool=CATALOG.filter(x=>x.category!=='Топперы');const topper=CATALOG.filter(x=>x.category==='Топперы');state.items=Array.from({length:7+Math.floor(Math.random()*5)},()=>makeItem(pool[Math.floor(Math.random()*pool.length)].id));if(Math.random()>.35)state.items.push(makeItem(topper[Math.floor(Math.random()*topper.length)].id));state.items=state.items.slice(0,15);state.customLayout=false;ensurePositions(state,true);render(true);notice('Готово! Всё можно поменять и передвинуть.');return}
+ if(b.id==='back-shelf')go(0);
+});
+$('#panel').addEventListener('input',e=>{if(e.target.id==='message'){state.message=e.target.value;$('#count').textContent=`${state.message.length} / 450`;draw()}});
 document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>go(+b.dataset.step));
 $('#next').onclick=()=>state.step<2?go(state.step+1):download();
-$('#shuffle').onclick=()=>{remember();state.seed=Math.floor(Math.random()*1e8);state.shape=(state.shape+1)%3;render(true);notice('Те же предметы, новая композиция.');};
-$('#undo').onclick=()=>{if(!previous)return;const current=snapshot(),step=state.step,message=state.message;state=previous;previous=current;state.step=state.items.length?step:0;state.message=message;render(true);};
-$('#restart').onclick=()=>{if(!confirm('Начать новый букет? Текущие изменения и текст будут сброшены.'))return;state={step:0,base:0,category:'Цветы',items:BASES[0].items.map(makeItem),palette:0,wrap:0,ribbon:0,shape:0,seed:Math.floor(Math.random()*1e8),message:PHRASES[0],title:0};previous=null;render();$('#panel').scrollTop=0;};
-function openPreview(){const d=$('#large-preview');$('#large-art').innerHTML=postcard(state);$('#large-preview p').textContent='Так будет выглядеть ваша открытка';d.showModal();}
-$('#preview').onclick=openPreview;$('#zoom').onclick=openPreview;$('#close-preview').onclick=()=>$('#large-preview').close();$('#large-preview').addEventListener('click',e=>{if(e.target===$('#large-preview'))$('#large-preview').close();});
-function textLines(text,size,width){const context=document.createElement('canvas').getContext('2d');context.font=`${size}px Arial`;let result=[];for(const paragraph of text.trim().replace(/\n{3,}/g,'\n\n').split('\n')){let line='';for(const word of paragraph.trim().split(/[^\S\n]+/)){const test=line?line+' '+word:word;if(context.measureText(test).width<=width){line=test;continue;}if(line)result.push(line);line='';for(const ch of word){if(context.measureText(line+ch).width>width){result.push(line);line='';}line+=ch;}}result.push(line);}return result;}
-function postcard(s){const title=['Большое спасибо!','С Днём учителя!','Этот букет — вам'][s.title];let size=29,lines;do{lines=textLines(s.message,size,870);if(lines.length*(size+10)<=245)break;size--;}while(size>15);if(lines.length*(size+10)>245){size=29;do{lines=textLines(s.message.replace(/\s+/g,' '),size,870);if(lines.length*(size+10)<=245)break;size--;}while(size>15);}return`<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350" role="img" aria-label="Открытка: ${esc(title)}"><rect width="1080" height="1350" fill="#f5f4ed"/><path d="M0 0 H1080 V162 H0Z" fill="#c7ff1a"/><text x="540" y="108" text-anchor="middle" font-family="Arial, sans-serif" font-size="57" font-weight="600" fill="#121212">${esc(title)}</text><g transform="translate(230 175) scale(1.24)">${bouquet(s).replace(/<svg[^>]*>/,'').replace('</svg>','')}</g>${lines.map((l,i)=>`<text x="540" y="${985+i*(size+10)}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${size}" fill="#252525">${esc(l)}</text>`).join('')}<path d="M70 1260 H1010" stroke="#aaa99e"/><text x="70" y="1305" font-family="Arial, sans-serif" font-size="27" font-weight="600">Skillbox</text><text x="1010" y="1305" text-anchor="end" font-family="Arial, sans-serif" font-size="20" fill="#55564e">С заботой.</text></svg>`;}
-async function download(){if(exporting)return;exporting=true;const copy=snapshot();controls();draw();let url;try{const svg=postcard(copy);url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));const img=new Image();await new Promise((ok,no)=>{img.onload=ok;img.onerror=no;img.src=url;});const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1350;canvas.getContext('2d').drawImage(img,0,0);const blob=await new Promise(ok=>canvas.toBlob(ok,'image/png'));if(!blob)throw Error('Empty export');const png=URL.createObjectURL(blob),link=document.createElement('a');link.href=png;link.download='Букет-с-характером.png';document.body.append(link);link.click();link.remove();const data=canvas.toDataURL('image/png');$('#large-art').innerHTML=`<img src="${data}" alt="Готовая открытка" width="1080" height="1350">`;$('#large-preview p').innerHTML=`<a href="${data}" download="Букет-с-характером.png">Сохранить PNG</a> · <a href="${data}" target="_blank" rel="noopener">Открыть картинку</a>`;$('#large-preview').showModal();setTimeout(()=>URL.revokeObjectURL(png),60000);notice('Готово! Если скачивание не началось, нажмите «Сохранить PNG».');}catch(error){console.error(error);notice('Не удалось сохранить. Попробуйте ещё раз.');}finally{if(url)URL.revokeObjectURL(url);exporting=false;controls();draw();}}
-render();
+$('#shuffle').onclick=()=>{remember();state.shape=(state.shape+1)%3;state.customLayout=false;ensurePositions(state,true);render(true)};
+$('#undo').onclick=()=>{if(!previous)return;const current=snapshot();state=previous;previous=current;render(true)};
+$('#restart').onclick=()=>{if(!confirm('Начать новый букет?'))return;state={step:0,base:0,category:'Цветы',items:BASES[0].items.map(makeItem),palette:0,wrap:0,ribbon:0,shape:0,seed:Date.now(),message:PHRASES[0],title:0,selectedUid:null,customLayout:false,phrasesOpen:false,lastPhrase:0};previous=null;ensurePositions(state,true);render()};
+function point(e,svg){const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left)*500/r.width,y:(e.clientY-r.top)*590/r.height}}
+$('#art').addEventListener('pointerdown',e=>{if(state.step===2)return;const g=e.target.closest('[data-bouquet-item]');if(!g)return;e.preventDefault();const uid=+g.dataset.bouquetItem,item=state.items.find(i=>i.uid===uid),svg=g.ownerSVGElement,p=point(e,svg);remember();item.z=Math.max(0,...state.items.map(i=>i.z||0))+1;state.selectedUid=uid;drag={uid,dx:p.x-item.x,dy:p.y-item.y,svg,moved:false};g.setPointerCapture?.(e.pointerId);draw()});
+$('#art').addEventListener('pointermove',e=>{if(!drag)return;e.preventDefault();const item=state.items.find(i=>i.uid===drag.uid),p=point(e,drag.svg);item.x=Math.max(55,Math.min(445,p.x-drag.dx));item.y=Math.max(55,Math.min(440,p.y-drag.dy));state.customLayout=true;drag.moved=true;draw()});
+function endDrag(){if(drag?.moved)notice('Своя композиция сохранена');drag=null}
+$('#art').addEventListener('pointerup',endDrag);$('#art').addEventListener('pointercancel',endDrag);
+function openPreview(){const d=$('#large-preview');$('#large-art').innerHTML=postcard(state);d.showModal()}
+$('#zoom').onclick=openPreview;$('#close-preview').onclick=()=>$('#large-preview').close();$('#large-preview').addEventListener('click',e=>{if(e.target===$('#large-preview'))e.currentTarget.close()});
+function textLines(text,size,width){const c=document.createElement('canvas').getContext('2d');c.font=`${size}px Graphik,Arial`;const out=[];for(const para of text.trim().split('\n')){let line='';for(const word of para.split(/\s+/)){const t=line?`${line} ${word}`:word;if(c.measureText(t).width<=width)line=t;else{if(line)out.push(line);line=word}}if(line)out.push(line)}return out}
+function postcard(s){const title=['Большое спасибо!','С Днём учителя!','Этот букет — вам'][s.title];let size=29,lines=textLines(s.message,size,880);while(lines.length*(size+10)>245&&size>16){size--;lines=textLines(s.message,size,880)}const inner=bouquet(s,false,false).replace(/<svg[^>]*>/,'').replace('</svg>','');return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350"><rect width="1080" height="1350" fill="#fff"/><rect width="1080" height="165" fill="#3D3BFF"/><text x="540" y="106" text-anchor="middle" font-family="Graphik,Arial" font-size="55" font-weight="600" fill="#fff">${esc(title)}</text><g transform="translate(230 175) scale(1.24)">${inner}</g>${lines.map((l,i)=>`<text x="540" y="${980+i*(size+10)}" text-anchor="middle" font-family="Graphik,Arial" font-size="${size}" fill="#000">${esc(l)}</text>`).join('')}<path d="M70 1260H1010" stroke="#d7d7d7"/><text x="70" y="1305" font-family="Graphik,Arial" font-size="29" font-weight="600">Skillbox</text><text x="1010" y="1305" text-anchor="end" font-family="Graphik,Arial" font-size="20">Букет с характером</text></svg>`}
+async function download(){if(exporting)return;exporting=true;controls();let url;try{const svg=postcard(snapshot());url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));const img=new Image();await new Promise((ok,no)=>{img.onload=ok;img.onerror=no;img.src=url});const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1350;canvas.getContext('2d').drawImage(img,0,0);const blob=await new Promise(ok=>canvas.toBlob(ok,'image/png'));const png=URL.createObjectURL(blob),a=document.createElement('a');a.href=png;a.download='Букет-с-характером.png';a.click();$('#large-art').innerHTML=`<img src="${canvas.toDataURL('image/png')}" alt="Готовая открытка">`;$('#large-preview').showModal();setTimeout(()=>URL.revokeObjectURL(png),60000);notice('Открытка готова!')}catch(e){console.error(e);notice('Не удалось сохранить. Попробуйте ещё раз.')}finally{if(url)URL.revokeObjectURL(url);exporting=false;controls()}}
+ensurePositions(state,true);render();
