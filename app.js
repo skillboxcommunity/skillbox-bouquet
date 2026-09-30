@@ -36,7 +36,8 @@ const CATEGORIES=['Цветы','Зелень','Вкусное','Для дела'
 const MAX_ITEMS=24;
 let nextUid=0;
 const makeItem=id=>({id,uid:++nextUid,variant:Math.floor(Math.random()*4),x:null,y:null,rotation:0,scale:.9,z:nextUid});
-let state={step:0,base:0,category:'Цветы',items:BASES[0].items.map(makeItem),palette:0,wrap:0,ribbon:0,shape:0,seed:Date.now(),message:PHRASES[0],title:0,selectedUid:null,customLayout:false,phrasesOpen:false,lastPhrase:0};
+const initialState=()=>({step:0,base:0,category:'Цветы',items:[],palette:0,wrap:0,ribbon:0,shape:0,seed:Date.now(),message:PHRASES[0],title:0,selectedUid:null,customLayout:false,phrasesOpen:false,lastPhrase:0});
+let state=initialState();
 let previous=null,exporting=false,drag=null;
 const itemName=id=>CATALOG.find(x=>x.id===id)?.name||id;
 const snapshot=()=>JSON.parse(JSON.stringify(state));
@@ -67,7 +68,7 @@ function render(animate=false){
  <div class="section-label">Полка с приятностями <button class="inline-link" id="view-selected">В букете: ${state.items.length} / ${MAX_ITEMS}</button></div>
  <div class="categories">${CATEGORIES.map(c=>`<button data-category="${c}" aria-pressed="${state.category===c}">${c}</button>`).join('')}</div>
  <div class="shelf">${filtered.map(card).join('')}</div>
- <button class="surprise" id="surprise">Собрать случайный букет <span>↗</span></button>
+ <button class="surprise" id="surprise">Собрать случайный букет</button>
  <div class="section-label">Уже в букете <small>${state.items.length} / ${MAX_ITEMS}</small></div>
  <div class="selected-items" id="selected-list">${state.items.map(i=>`<div class="selected-row">${thumb(i.id,state.palette)}<span>${itemName(i.id)}</span><button class="mini" data-remove="${i.uid}">Убрать</button></div>`).join('')||'<p class="tip">Пока пусто. Добавьте первый предмет.</p>'}</div>`;
  else if(state.step===1)html=`<h2>Последний штрих</h2><p class="description">Выберите палитру цветов, бумагу, ленту и стартовую композицию. После этого предметы всё ещё можно двигать вручную.</p>
@@ -78,7 +79,7 @@ function render(animate=false){
  ${optionGroup('Заголовок',['Большое спасибо!','С Днём учителя!','Этот букет — вам'],'title')}
  <label class="field-label" for="message">Ваше поздравление</label><textarea id="message" maxlength="450" rows="5" placeholder="Напишите свои слова благодарности…">${esc(state.message)}</textarea>
  <div class="text-meta"><span>Никуда не отправляется</span><span id="count">${state.message.length} / 450</span></div>
- <div class="section-label">Если сложно подобрать слова</div><div class="phrase-tools"><button class="phrase-action" id="random-phrase">Предложить поздравление <span>↗</span></button><button class="phrase-action" id="show-phrases">${state.phrasesOpen?'Скрыть варианты':'Посмотреть все 25'}</button></div>
+ <div class="section-label">Если сложно подобрать слова</div><div class="phrase-tools"><button class="phrase-action" id="random-phrase">Предложить поздравление</button><button class="phrase-action" id="show-phrases">${state.phrasesOpen?'Скрыть варианты':'Посмотреть все 25'}</button></div>
  <div class="phrase-list ${state.phrasesOpen?'':'hidden'}">${PHRASES.map((p,i)=>`<button data-phrase="${i}">${p}</button>`).join('')}</div><p class="tip">Любой готовый вариант можно отредактировать или полностью заменить своим текстом.</p>`;
  $('#panel').innerHTML=html;
 }
@@ -103,7 +104,7 @@ document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>go(+b.dataset.
 $('#next').onclick=()=>state.step<2?go(state.step+1):download();
 $('#shuffle').onclick=()=>{remember();state.shape=(state.shape+1)%3;state.customLayout=false;ensurePositions(state,true);render(true)};
 $('#undo').onclick=()=>{if(!previous)return;const current=snapshot();state=previous;previous=current;render(true)};
-$('#restart').onclick=()=>{if(!confirm('Начать новый букет?'))return;state={step:0,base:0,category:'Цветы',items:BASES[0].items.map(makeItem),palette:0,wrap:0,ribbon:0,shape:0,seed:Date.now(),message:PHRASES[0],title:0,selectedUid:null,customLayout:false,phrasesOpen:false,lastPhrase:0};previous=null;ensurePositions(state,true);render()};
+$('#restart').onclick=()=>{if(!confirm('Начать новый букет?'))return;state=initialState();previous=null;ensurePositions(state,true);render()};
 function point(e,svg){const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left)*500/r.width,y:(e.clientY-r.top)*590/r.height}}
 function itemTransform(item){return `translate(${item.x} ${item.y}) rotate(${item.rotation||0}) scale(${item.scale||.9})`}
 $('#art').addEventListener('pointerdown',e=>{if(state.step===2)return;const g=e.target.closest('[data-bouquet-item]');if(!g)return;e.preventDefault();const uid=+g.dataset.bouquetItem,item=state.items.find(i=>i.uid===uid),svg=g.ownerSVGElement,p=point(e,svg);remember();item.z=Math.max(0,...state.items.map(i=>i.z||0))+1;state.selectedUid=uid;document.querySelectorAll('.bouquet-object').forEach(el=>el.classList.toggle('is-selected',el===g));drag={uid,dx:p.x-item.x,dy:p.y-item.y,svg,el:g,moved:false,pointerId:e.pointerId};e.currentTarget.setPointerCapture?.(e.pointerId)});
